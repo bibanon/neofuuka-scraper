@@ -1,0 +1,46 @@
+{
+	"scraper": {
+		"global": {
+			"typeInput": "yotsuba.json",
+			"typeOutput": "asagi",
+			"sourceLinkPosts": "https://a.4cdn.org/",
+			"sourceLinkFilesThb": "https://i.4cdn.org/",
+			"sourceLinkFilesSrc": "https://i.4cdn.org/",
+			"dbSrvHost": "127.0.0.1",
+			"dbSrvPort": 3306,
+			"dbUserName": "example",
+			"dbUserPass": "example",
+			"dbDatabase": "asagi",
+			"dbCharset": "utf8mb4",
+			"doSavePosts": true,
+			"doSaveFilesThb": true,
+			"doSaveFilesSrc": true,
+			"threadsForPosts": 1,
+			"threadsForFilesThb": 3,
+			"threadsForFilesSrc": 2,
+			"catalogScrapeEnable": true,
+			"catalogScrapeTimeFreq": 120,
+			"catalogScrapeTimeWait": 300,
+			"timeBetweenIndexUpdates": 30,
+			"timeBetweenTopicForceUpdates": 18000,
+			"timeBetweenFileSaveAttempts": 300,
+			"indexArchiveOnStartup": false,
+			"indexArchiveOnConnect": false,
+			"topicDeleteThreshold": 8,
+			"fileSavePath": "./media/",
+			"fileTouchOnDupe": false,
+			"fileMismatchRedo": false,
+			"requestUserAgent": "neofuuka-scraper",
+			"requestTimeoutText": 10.0,
+			"requestTimeoutFile": 40.0,
+			"requestThrottleBoard": 0.5,
+			"requestThrottleGlobal": 0.1
+		},
+		
+		"boards": {
+			"example": {
+				"sourceBoard": "a"
+			}
+		}
+	}
+}

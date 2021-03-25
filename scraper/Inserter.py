@@ -66,7 +66,7 @@ class Inserter(Thread):
 				for post in posts:
 					comment = post.comment
 					comment = (comment if comment else None)
-					comment = ((asagi_comment_parse(comment) if comment else comment))
+					comment = (asagi_comment_parse(comment) if comment else comment)
 					
 					# REMOVE ME
 					# comment = post.get_comment_clean()

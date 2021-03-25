@@ -104,10 +104,10 @@ def asagi_comment_parse(x):
 	return x
 
 # fuck up a timestamp in the same way asagi does
-# aka interpret it as America/New_York and convert to UTC
-# probably a leftover from the days of parsing HTML dates
+# aka convert it into America/New_York and pretend it's UTC
+# probably a leftover from the old days of parsing HTML dates
 def asagi_timestamp_conv(x):
-	x = datetime.datetime.utcfromtimestamp(x)
+	x = datetime.datetime.fromtimestamp(x, tz=TIMEZONE_UTC)
 	x = x.astimezone(TIMEZONE_4CH)
 	x = x.replace(tzinfo=TIMEZONE_UTC)
 	x = int(x.timestamp())

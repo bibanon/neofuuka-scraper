@@ -85,7 +85,7 @@ class Requests():
 				if type == RequestType.TEXT:
 					with self.board.lock:
 						modified = RequestModified(hash)
-						modified.time_str = response.headers.get("last-modified")
+						modified.time_str = response.headers.get("Last-Modified")
 						modified.time_int = self.parse_time_str(modified.time_str)
 						
 						if modified.time_int:

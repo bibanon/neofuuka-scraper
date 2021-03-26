@@ -150,23 +150,38 @@ class ItemPost():
 		
 		if self.data:
 			if self.data.get("troll_country"):
-				out["trollCountry"] = self.data["troll_country"]
+				out["troll_country_code"] = self.data.get("troll_country")
+				out["troll_country_name"] = self.data.get("country_name")
 			
 			if self.data.get("since4pass"):
 				out["since4pass"] = str(self.data["since4pass"])
 		
 		if self.comment:
-			# TODO: parse exif and oekaki for new stack
+			# if the comment includes stuff that can't be normally parsed,
+			# just save the whole thing so the data isn't lost or mangled
 			
-			# if "<table class=\"exif" in self.comment:
-			# if "<small><b>Oekaki" in self.comment:
-			
-			pass
+			if (
+				self.poster_capcode or
+				"<table class=\"exif" in self.comment or
+				"<small><b>Oekaki" in self.comment or
+				"<img " in self.comment or
+				"<iframe " in self.comment or
+				"src=\"" in self.comment or
+				"width=\"" in self.comment or
+				(
+					"style=\"" in self.comment and
+					not (
+						"<strong style=" in self.comment or
+						"class=\"fortune" in self.comment
+					)
+				)
+			):
+				out["comment"] = self.comment
 		
-		if len(out) == 0:
-			out = None
+		if len(out) > 0:
+			return out
 		
-		return out
+		return None
 	
 	def get_file_hash_b64(self):
 		if self.file_hash:

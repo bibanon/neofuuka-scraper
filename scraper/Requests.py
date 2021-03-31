@@ -9,6 +9,8 @@ class Requests():
 	def __init__(self, board):
 		self.board = board
 		
+		self.lock = threading.Lock()
+		
 		self.types = {}
 		
 		self.modifieds = []
@@ -18,12 +20,11 @@ class Requests():
 			
 			if type == RequestType.TEXT:
 				tmp.timeout = self.board.conf.get("requestTimeoutText", tmp.timeout)
+				tmp.interval = self.board.conf.get("requestThrottleBoard")
 			
 			if type == RequestType.FILE:
 				tmp.timeout = self.board.conf.get("requestTimeoutFile", tmp.timeout)
-			
-			if type == RequestType.TEXT:
-				tmp.interval = self.board.conf.get("requestThrottleBoard")
+				tmp.interval = 0.002
 			
 			self.types[type] = tmp
 	
@@ -67,7 +68,7 @@ class Requests():
 			request["params"]["v"] = int(time.time())
 		
 		if since:
-			with self.board.lock:
+			with self.lock:
 				for item in self.modifieds:
 					if item.hash == hash:
 						request["headers"]["If-Modified-Since"] = item.time_str
@@ -83,7 +84,7 @@ class Requests():
 			
 			if res.code == 200:
 				if type == RequestType.TEXT:
-					with self.board.lock:
+					with self.lock:
 						modified = RequestModified(hash)
 						modified.time_str = response.headers.get("Last-Modified")
 						modified.time_int = self.parse_time_str(modified.time_str)
@@ -140,8 +141,8 @@ class RequestTypeDat():
 	def __init__(self):
 		self.lock = threading.Lock()
 		self.timeout = 10
-		self.interval = 0.001
-		self.timelast = 0
+		self.interval = 0.0
+		self.timelast = 0.0
 
 class RequestModified():
 	def __init__(self, hash):

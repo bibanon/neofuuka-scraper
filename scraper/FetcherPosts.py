@@ -51,6 +51,9 @@ class FetcherPosts(Thread):
 				if topic1.fetch_last == None:
 					# never been fetched before
 					reason1 = "new"
+					
+					if topic1.archive:
+						reason1 = "arc"
 				
 				if (
 					topic1.time_deleted or

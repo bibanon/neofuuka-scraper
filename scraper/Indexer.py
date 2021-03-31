@@ -284,13 +284,15 @@ class Indexer(Thread):
 					if not data: raise Exception()
 					if not data[0]: raise Exception()
 					
-					for data_topic in data:
-						if type(data_topic) is not int:
+					count = 0
+					
+					for topic_d in data:
+						if type(topic_d) is not int:
 							raise Exception()
 						
 						# ignore topics we already have
-						if topics_in_board.get(data_topic): continue
-						if topics_in_index.get(data_topic): continue
+						if topics_in_board.get(topic_d): continue
+						if topics_in_index.get(topic_d): continue
 						
 						# TODO: query database and exclude topics marked as archived
 						# or maybe use a cache like redis?
@@ -298,19 +300,24 @@ class Indexer(Thread):
 						topic = ItemTopic()
 						
 						topic.board = self.board
-						topic.number = data_topic
-						topic.time_modified = int(time.time())
+						topic.number = topic_d
+						topic.time_modified = time_now
 						topic.archive = True
 						
-						topic.fetch_need = (time_now + 0.002)
+						# archived topics are of lowest priority
+						topic.fetch_need = (time_now + (60*60*24*3))
 						
 						self.board.topics.append(topic)
 						
 						topics_in_index[topic.number] = True
+						
+						count += 1
 					
 					self.archived_once = True
+					
+					self.board.log(self, f"Archive index got {count} topics")
 				except:
-					self.board.log(self, "Indexing archive failed for some reason")
+					self.board.log(self, "Indexing archive failed")
 					pass
 			
 			self.conn_success_last = time.time()
@@ -332,7 +339,7 @@ class Indexer(Thread):
 							topic.time_deleted or
 							topic.time_archived
 						):
-							topic.fetch_need = (time_now + 0.001)
+							topic.fetch_need = (time_now + 0.01)
 							topic.missing = True
 							
 							count_mod += 1
@@ -345,10 +352,6 @@ class Indexer(Thread):
 			self.board.log(self, f"Updated mod={count_mod - count_cat}+{count_cat} idx={len(self.board.topics)} ins={len(self.board.save_posts)} img={len(self.board.save_files)}")
 			
 			self.board.lock.release()
-			
-			# free
-			del res
-			del data
 			
 			self.board.sleep(self.board.conf["timeBetweenIndexUpdates"])
 			

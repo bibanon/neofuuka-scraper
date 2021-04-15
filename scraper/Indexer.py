@@ -1,5 +1,6 @@
 import json
 import time
+import math
 
 from .Thread import *
 from .Requests import *
@@ -284,6 +285,12 @@ class Indexer(Thread):
 					if not data: raise Exception()
 					if not data[0]: raise Exception()
 					
+					data.sort(reverse=True)
+					
+					target = self.board.conf.get("indexArchivePercent", 0.50)
+					target = (len(data) * target)
+					target = math.ceil(target)
+					
 					count = 0
 					
 					for topic_d in data:
@@ -312,6 +319,10 @@ class Indexer(Thread):
 						topics_in_index[topic.number] = True
 						
 						count += 1
+						
+						if count >= target: break
+						
+						continue
 					
 					self.archived_once = True
 					

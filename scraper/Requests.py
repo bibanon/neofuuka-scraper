@@ -41,12 +41,13 @@ class Requests():
 			type == RequestType.TEXT and
 			self.board.conf.get("requestThrottleGlobal") > 0.001
 		):
-			self.board.scraper.request_lock.acquire()
-			self.board.sleep(self.board.conf.get("requestThrottleGlobal") - (time.time() - self.board.scraper.request_time))
-			self.board.scraper.request_time = time.time()
-			self.board.scraper.request_lock.release()
+			self.board.shared.request_lock.acquire()
+			since = (time.time() - self.board.shared.request_time.value)
+			self.board.sleep(self.board.conf.get("requestThrottleGlobal") - since)
+			self.board.shared.request_time.value = time.time()
+			self.board.shared.request_lock.release()
 		
-		if self.board.stop: return res
+		if self.board.stop(): return res
 		
 		time_now = time.time()
 		

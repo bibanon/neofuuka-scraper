@@ -2,7 +2,10 @@ import time
 import math
 import datetime
 import threading
+import multiprocessing
+import signal
 import requests
+import psutil
 
 from .Scraper import *
 from .Thread import *
@@ -15,34 +18,42 @@ from .FetcherFiles import *
 from .Inserter import *
 from .ItemFile import *
 
-class Board():
-	def __init__(self, scraper, name, conf):
-		self.scraper = scraper
+class Board(multiprocessing.Process):
+	def __init__(self, scraper, name, conf, args):
+		super().__init__()
 		
-		self.name = name
+		self.name1 = name
 		self.conf = conf
+		self.args = args
 		
-		if re.match(r"^([a-zA-Z0-9_\-])+$", self.name) == None:
+		self.shared = scraper.shared
+		self.master = scraper.pid
+		
+		self.name = f"Scraper /{self.name1}/"
+		self.daemon = True
+		
+		# validate name
+		if re.match(r"^([a-zA-Z0-9_\-])+$", self.name1) == None:
 			raise Exception("Board name is invalid")
 		
-		# stop flag
-		self.stop = False
+		# stop signal
+		self.stop1 = False
 		
 		# threads
 		self.threads = None
 		
 		# objects
-		self.lock = threading.Lock()
-		self.lock_log = threading.Lock()
-		self.requests = Requests(self)
-		self.database = Database(self)
-		self.storage = Storage(self)
+		self.lock = None
+		self.lock_log = None
+		self.requests = None
+		self.database = None
+		self.storage = None
 		
 		# data
-		self.topics = [] # list of active topics
-		self.save_posts = [] # queue of posts waiting to be inserted
-		self.save_files = [] # queue of posts waiting to be downloaded
-		self.save_hashes = [] # for inserting calculated file hashes in new schema
+		self.topics = None # list of active topics
+		self.save_posts = None # queue of posts waiting to be inserted
+		self.save_files = None # queue of posts waiting to be downloaded
+		# self.save_hashes = None # for inserting calculated file hashes in new schema
 		
 		# other info
 		self.info_has_index_live = False
@@ -50,10 +61,26 @@ class Board():
 		
 		self.fix_config()
 	
-	def start(self):
+	def run(self):
 		self.log(self, "Board start")
 		
-		if self.stop: return
+		if self.stop(): return
+		
+		# handle signals
+		signal.signal(signal.SIGINT, self.signal)
+		signal.signal(signal.SIGTERM, self.signal)
+		
+		# create objects
+		self.lock = threading.Lock()
+		self.lock_log = threading.Lock()
+		self.requests = Requests(self)
+		self.database = Database(self)
+		self.storage = Storage(self)
+		
+		# create data
+		self.topics = []
+		self.save_posts = []
+		self.save_files = []
 		
 		# create threads
 		self.threads = []
@@ -83,33 +110,55 @@ class Board():
 			for idx in range(self.conf.get("threadsForFilesSrc", 0)):
 				self.threads.append(FetcherFiles(self, index=(idx+1), type=FileType1.SRC))
 		
-		if self.stop: return
+		if self.stop(): return
 		
 		# fetch remote info
 		# maybe take out of main thread?
 		self.fetch_remote_info()
 		
-		if self.stop: return
+		if self.stop(): return
 		
 		# start threads
 		for thread in self.threads:
 			thread.start()
+		
+		# wait for stop signal
+		while True:
+			if self.stop(): break
+			time.sleep(0.1)
+			continue
+		
+		self.log(None, "Stopping...")
+		
+		# wait for threads to stop
+		while True:
+			wait = False
+			
+			for thread in self.threads:
+				if thread.is_alive():
+					wait = True
+					break
+			
+			if not wait: break
+			
+			time.sleep(0.1)
+			
+			continue
+		
+		self.log(None, "Stopped")
+		
+		return
+	
+	def stop(self):
+		if self.shared.stop.value != 0: return True
+		if self.stop1: return True
+		return False
+	
+	def signal(self, signum, frame):
+		self.stop1 = True
 	
 	def schema(self):
 		return Schema.ASAGI
-	
-	def set_stop(self):
-		self.stop = True
-	
-	def stopped(self):
-		if not self.stop:
-			return False
-		
-		for thread in self.threads:
-			if thread.is_alive():
-				return False
-		
-		return True
 	
 	def log(self, source = None, text = "?"):
 		date_now = datetime.datetime.now()
@@ -117,7 +166,7 @@ class Board():
 		
 		if source == None: source = self
 		
-		source_name = f"/{self.name}/ {source.__class__.__name__}"
+		source_name = f"/{self.name1}/ {source.__class__.__name__}"
 		if isinstance(source, Thread): source_name = source.name
 		
 		# if "DBG " in text: return
@@ -129,14 +178,14 @@ class Board():
 		
 		'''
 		with self.lock_log:
-			file = open(f"./scraper.log.{self.name}.txt", "a", encoding="utf8")
+			file = open(f"./scraper.log.{self.name1}.txt", "a", encoding="utf8")
 			file.write(msg + "\n")
 			file.close()
 		'''
 	
 	def sleep(self, value = 1.0):
 		while True:
-			if self.stop: break
+			if self.stop(): break
 			if value <= 0: break
 			
 			tmp = min(value, 0.1)
@@ -182,7 +231,7 @@ class Board():
 	
 	def fetch_remote_info(self):
 		for _ in range(3):
-			if self.stop: break
+			if self.stop(): break
 			
 			try:
 				res = \
@@ -206,7 +255,7 @@ class Board():
 				pass
 		
 		for _ in range(3):
-			if self.stop: break
+			if self.stop(): break
 			
 			try:
 				res = \
@@ -233,7 +282,7 @@ class Board():
 		self.log(self, ("Remote has index arch? " + str(self.info_has_index_arch)))
 	
 	def get_source_name(self):
-		return (self.conf.get("sourceBoard") if self.conf.get("sourceBoard") else self.name)
+		return (self.conf.get("sourceBoard") if self.conf.get("sourceBoard") else self.name1)
 	
 	def get_link_index_live(self):
 		name = ("catalog" if self.conf.get("catalogScrapeEnable", False) else "threads")
@@ -246,25 +295,34 @@ class WorkerData(Thread):
 	def run(self):
 		super().run()
 		
-		time_info = time.time()
-		time_limit = time.time()
+		timer_info = time.time()
+		timer_limit = time.time()
 		
-		self.board.sleep(10.0)
+		self.board.sleep(3.0)
 		
 		while True:
-			if self.board.stop: break
+			# check master process status
+			try:
+				psutil.Process(self.board.master)
+			except psutil.NoSuchProcess:
+				self.board.log(None, "Master process died!")
+				self.board.stop1 = True
+			except:
+				self.board.log(None, "Unknown error when checking master process [weird]")
+			
+			if self.board.stop(): break
 			
 			time_now = time.time()
 			
-			if (time_now - time_info) > (60*10):
-				time_info = time_now
+			if (time_now - timer_info) > (60*10):
+				timer_info = time_now
 				
 				self.board.log(self.board, "Updating remote info")
 				
 				self.board.fetch_remote_info()
 			
-			if (time_now - time_limit) > (60*20):
-				time_limit = time_now
+			if (time_now - timer_limit) > (60*20):
+				timer_limit = time_now
 				
 				self.board.log(self.board, "Applying queue limits")
 				
@@ -283,7 +341,7 @@ class WorkerDatabase(Thread):
 		super().run()
 		
 		while True:
-			if self.board.stop:
+			if self.board.stop():
 				if self.board.database.conn:
 					self.board.database.lock.acquire()
 				
@@ -314,7 +372,7 @@ class WorkerTest(Thread):
 		self.board.sleep(1.0)
 		
 		while True:
-			if self.board.stop: break
+			if self.board.stop(): break
 			
 			# example usage of database
 			# lock is intentionally not released if error occurs

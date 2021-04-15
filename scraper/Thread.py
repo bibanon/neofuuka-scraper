@@ -10,7 +10,7 @@ class Thread(threading.Thread):
 		self.index = args.get("index", 0)
 		self.type = args.get("type", None)
 		
-		self.name = f"/{board.name}/ {self.__class__.__name__}"
+		self.name = f"/{board.name1}/ {self.__class__.__name__}"
 		
 		if self.type != None:
 			self.name = f"{self.name} {self.type.name}"

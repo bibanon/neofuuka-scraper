@@ -32,12 +32,12 @@ class Inserter(Thread):
 			" SET deleted = %s, timestamp_expired = %s" \
 			" WHERE num = %s AND subnum = 0"
 		
-		query_insert = query_insert.format(self.board.name)
-		query_update = query_update.format(self.board.name)
-		query_delete = query_delete.format(self.board.name)
+		query_insert = query_insert.format(self.board.name1)
+		query_update = query_update.format(self.board.name1)
+		query_delete = query_delete.format(self.board.name1)
 		
 		while True:
-			if self.board.stop: break
+			if self.board.stop(): break
 			
 			posts = []
 			
@@ -188,7 +188,7 @@ class Inserter(Thread):
 			# if they do fail, something's wrong and it should be evident
 			
 			while True:
-				if self.board.stop: break
+				if self.board.stop(): break
 				
 				try:
 					self.board.database.act_start()
@@ -219,7 +219,7 @@ class Inserter(Thread):
 					if len(hashes):
 						cursor = self.board.database.cursor()
 						
-						cursor.execute("SELECT * FROM `{}_images` WHERE media_hash IN ({})".format(self.board.name, ",".join(hashes)))
+						cursor.execute("SELECT * FROM `{}_images` WHERE media_hash IN ({})".format(self.board.name1, ",".join(hashes)))
 						
 						rows = {}
 						

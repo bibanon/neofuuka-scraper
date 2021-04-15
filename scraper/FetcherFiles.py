@@ -11,7 +11,7 @@ class FetcherFiles(Thread):
 		super().run()
 		
 		while True:
-			if self.board.stop: break
+			if self.board.stop(): break
 			
 			file = None
 			

@@ -10,7 +10,7 @@ class FetcherPosts(Thread):
 		super().run()
 		
 		while True:
-			if self.board.stop: break
+			if self.board.stop(): break
 			
 			topic = None
 			reason = None
@@ -217,7 +217,7 @@ class FetcherPosts(Thread):
 			with self.board.lock:
 				topic.fetch_exec = False
 				
-				if topic.time_archived:
+				if topic.time_archived and not topic.archive:
 					self.board.log(self, f"Topic #{topic.number} has been archived")
 				
 				if (

@@ -21,7 +21,7 @@ class Indexer(Thread):
 		self.board.sleep(1)
 		
 		while True:
-			if self.board.stop: break
+			if self.board.stop(): break
 			
 			if not self.board.info_has_index_live:
 				self.board.sleep(0.3)

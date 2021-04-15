@@ -1,7 +1,9 @@
 import sys
+import os
 import time
 import signal
 import threading
+import multiprocessing
 import json
 
 from .Board import *
@@ -13,25 +15,25 @@ class Scraper():
 		self.config = config
 		self.args = args
 		
-		# stop flag
-		self.stop = False
+		self.pid = None
+		
+		# stop signal
+		self.stop1 = False
 		
 		# board list
 		self.boards = None
 		
-		# general scraper lock
-		self.scraper_lock = threading.Lock()
-		
-		# global request throttling
-		self.request_lock = threading.Lock()
-		self.request_time = 0
-		
-		# TODO: use this to track global archived threads
-		# periodically save it to a file and load on start
-		self.archiveds = []
+		# shared stuff
+		self.shared = None
 	
 	def run(self):
+		self.pid = os.getpid()
+		
+		multiprocessing.set_start_method("spawn")
+		
 		self.boards = []
+		
+		self.shared = Shared()
 		
 		try:
 			# load boards from config
@@ -48,7 +50,8 @@ class Scraper():
 					Board(
 						self,
 						board_name,
-						board_conf
+						board_conf,
+						self.args
 					)
 				
 				self.boards.append(board)
@@ -60,13 +63,13 @@ class Scraper():
 		
 		timer = time.time()
 		
-		# handle signals
-		signal.signal(signal.SIGINT, self.signal)
-		signal.signal(signal.SIGTERM, self.signal)
-		
 		# start each board
 		for board in self.boards:
 			board.start()
+		
+		# handle signals
+		signal.signal(signal.SIGINT, self.signal)
+		signal.signal(signal.SIGTERM, self.signal)
 		
 		# wait for stop
 		try:
@@ -74,7 +77,7 @@ class Scraper():
 				time.sleep(0.1)
 				
 				# signal break
-				if self.stop: break
+				if self.stop1: break
 				
 				# profiler break
 				if (
@@ -91,7 +94,7 @@ class Scraper():
 			wait = False
 			
 			for board in self.boards:
-				if not board.stopped():
+				if board.is_alive():
 					wait = True
 			
 			if not wait: break
@@ -103,25 +106,22 @@ class Scraper():
 		return 0
 	
 	def signal(self, signum, frame):
-		if self.stop:
+		if self.stop1:
 			sys.exit(1)
 		
 		self.set_stop()
 	
 	def set_stop(self):
-		self.stop = True
-		
-		if self.boards:
-			for board in self.boards:
-				board.set_stop()
-	
-	def save_read(self):
-		pass
-	
-	def save_write(self):
-		with self.scraper_lock:
-			# FILE_SAVE
-			pass
+		self.stop1 = True
+		self.shared.stop.value = 1
+
+class Shared():
+	def __init__(self):
+		self.stop = multiprocessing.Value("b", 0)
+		self.lock = multiprocessing.Lock()
+		self.print_lock = multiprocessing.RLock()
+		self.request_lock = multiprocessing.Lock()
+		self.request_time = multiprocessing.Value("d", 0.0)
 
 class Schema(enum.Enum):
 	NEO = enum.auto()

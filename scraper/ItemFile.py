@@ -38,12 +38,12 @@ class ItemFile():
 	
 	def get_path(self):
 		path = self.board.conf.get("fileSavePath")
-		path = path.format(board = self.board.name)
+		path = path.format(board = self.board.name1)
 		
 		path = \
 			os.path.join(
 				path,
-				self.board.name,
+				self.board.name1,
 				("thumb" if self.type1 == FileType1.THB else "image"),
 				str(self.time1)[0:4],
 				str(self.time1)[4:6],

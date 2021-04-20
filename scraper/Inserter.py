@@ -15,7 +15,7 @@ class Inserter(Thread):
 			" (num, subnum, thread_num, op, timestamp, timestamp_expired, preview_orig, preview_w," \
 			" preview_h, media_filename, media_w, media_h, media_size, media_hash, media_orig, spoiler," \
 			" deleted, capcode, name, trip, title, comment, sticky, locked, poster_hash, poster_country, exif)" \
-			" SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" \
+			" SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM DUAL" \
 			" WHERE NOT EXISTS (SELECT 1 FROM `{0}` WHERE num = %s AND subnum = 0)" \
 			" AND NOT EXISTS (SELECT 1 FROM `{0}_deleted` WHERE num = %s AND subnum = 0)"
 		

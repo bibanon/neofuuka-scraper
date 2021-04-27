@@ -67,9 +67,7 @@ class Inserter(Thread):
 					comment = post.comment
 					comment = (comment if comment else None)
 					comment = (asagi_comment_parse(comment) if comment else comment)
-					
-					# REMOVE ME
-					# comment = post.get_comment_clean()
+					comment = comment[0:16384] # mysql text limits bytes not chars
 					
 					extra = post.get_extra()
 					extra = (json_encode_obj(extra) if extra else extra)
@@ -93,21 +91,21 @@ class Inserter(Thread):
 						(1 if post.spoiler else 0),
 						(0),
 						(asagi_capcode_conv(post.poster_capcode)),
-						(post.poster_name if post.poster_name else None),
-						(post.poster_trip if post.poster_trip else None),
-						(post.subject if post.subject else None),
+						(post.poster_name[0:100] if post.poster_name else None),
+						(post.poster_trip[0:25] if post.poster_trip else None),
+						(post.subject[0:100] if post.subject else None),
 						(comment if comment else None),
 						(1 if post.is_opener() and post.topic.sticky else 0),
 						(1 if post.is_opener() and post.topic.closed else 0),
-						(post.poster_userid if post.poster_userid else None),
-						(post.poster_country if post.poster_country else None),
+						(post.poster_userid[0:8] if post.poster_userid else None),
+						(post.poster_country[0:2] if post.poster_country else None),
 						(extra),
 						(post.number),
 						(post.number),
 					])
 					
 					values_update.append([
-						(post.subject if post.subject else None),
+						(post.subject[0:100] if post.subject else None),
 						(comment if comment else None),
 						(1 if post.spoiler else 0),
 						(1 if post.is_opener() and post.topic.sticky else 0),

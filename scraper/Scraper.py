@@ -27,13 +27,11 @@ class Scraper():
 		self.shared = None
 	
 	def run(self):
-		self.pid = os.getpid()
-		
-		multiprocessing.set_start_method("spawn")
+		# multiprocessing.set_start_method("spawn")
 		
 		self.boards = []
-		
 		self.shared = Shared()
+		self.pid = os.getpid()
 		
 		try:
 			# load boards from config

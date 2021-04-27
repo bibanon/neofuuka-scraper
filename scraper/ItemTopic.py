@@ -19,7 +19,8 @@ class ItemTopic():
 		self.rotate = False
 		self.page = None
 		
-		self.posts = [] # list of ItemPostTmp
+		self.posts = {} # dict of ItemPostCache
+		self.posts_ins = False # does one of the items in self.posts need insert?
 		self.index_count_reply = None # last reply count reported by catalog
 		self.index_count_image = None # last image count reported by catalog
 		self.last_seen_reply = None # highest post number seen in thread
@@ -32,7 +33,7 @@ class ItemTopic():
 	
 	def get_hash(self):
 		return \
-			get_hash_obj([
+			checksum([
 				self.number,
 				self.time_posted,
 				self.time_bumped,
@@ -46,7 +47,10 @@ class ItemTopic():
 			])
 	
 	def get_link(self):
-		return (self.board.conf["sourceLinkPosts"] + "/" + self.board.get_source_name() + "/thread/" + str(self.number) + ".json")
+		return (
+			self.board.get_link_base() + "/thread/" +
+			str(self.number) + ".json"
+		)
 	
 	def make_from_api(self, data):
 		try:
@@ -96,19 +100,13 @@ class ItemTopic():
 			# update topic from post json
 			self.make_from_api(post.data)
 		
-		post_tmp = None
+		post_c = self.posts.get(post.number)
 		
-		for item in self.posts:
-			if item.number == post.number:
-				post_tmp = item
-				break
-		
-		if post_tmp == None:
+		if post_c == None:
 			# first time we're seeing this post
 			
-			post_tmp = ItemPostTmp()
-			post_tmp.number = post.number
-			self.posts.append(post_tmp)
+			post_c = ItemPostCache(post)
+			self.posts[post.number] = post_c
 			
 			if post.file_time:
 				# add file to fetch queue
@@ -128,10 +126,10 @@ class ItemTopic():
 		
 		hash = post.get_hash()
 		
-		if post_tmp.hash != hash:
+		if post_c.hash != hash:
 			# this post is new or modified
 			
-			post_tmp.hash = hash
+			post_c.hash = hash
 			
 			if (
 				self.time_bumped == None or
@@ -149,11 +147,19 @@ class ItemTopic():
 			
 			if (
 				post.time_deleted_file != None and
-				post_tmp.time_deleted_file == None
+				post_c.time_deleted_file == None
 			):
 				# update row with deleted file
-				post_tmp.time_deleted_file = post.time_deleted_file
-				post_tmp.insert = True
+				post_c.time_deleted_file = post.time_deleted_file
+				post_c.set_insert()
 			
 			# add post to insert queue
 			self.board.save_posts.append(post)
+	
+	def update_posts_ins(self):
+		for post in self.posts.values():
+			if post.insert:
+				self.posts_ins = True
+				return
+		
+		self.posts_ins = False

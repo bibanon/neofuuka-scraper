@@ -1,6 +1,7 @@
 import time
 import enum
 import threading
+import hashlib
 import requests
 
 from .Utils import *
@@ -107,7 +108,7 @@ class Requests():
 										break
 								
 								self.modifieds.insert(0, modified)
-								self.modifieds = self.modifieds[0:1000]
+								self.modifieds = self.modifieds[0:500]
 				
 				if res.code == 200:
 					res.data = response.content
@@ -117,7 +118,10 @@ class Requests():
 		return res
 	
 	def get_url_hash(self, url):
-		return get_hash_str(url)
+		hash = hashlib.md5()
+		hash.update(url.encode("utf8"))
+		hash = hash.digest()[0:5]
+		return hash
 	
 	def parse_time_str(self, str):
 		try:

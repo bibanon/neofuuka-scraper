@@ -4,25 +4,23 @@ import html
 import re
 import hashlib
 import datetime
+import pickle
+import zlib
 import pytz
 
 # timezones for asagi fuckup
 TIMEZONE_UTC = pytz.timezone("UTC")
 TIMEZONE_4CH = pytz.timezone("America/New_York")
 
+# get crc32 of object
+def checksum(a):
+	# json is somewhat slow and can't encode all types so we use pickle
+	# pickle isn't guaranteed to be deterministic but it generally is here
+	return zlib.crc32(pickle.dumps(a))
+
 # encode an object into json
 def json_encode_obj(a):
 	return json.dumps(obj=a, separators=(",",":"))
-
-# generate a 4-byte hash of a string
-def get_hash_str(a):
-	hash = hashlib.md5()
-	hash.update(a.encode("utf8"))
-	return hash.digest()[0:4]
-
-# generate a 4-byte hash of a json-able object
-def get_hash_obj(a):
-	return get_hash_str(json_encode_obj(a))
 
 # escape html chars, consistent with yotsuba
 def asagi_html_escape(a):
@@ -134,4 +132,4 @@ def prof_timer():
 
 def prof_print(timer, txt="?"):
 	delta = (prof_timer() - timer)
-	print(f"PROFILER: {delta:.6f} ({txt})")
+	print(f"PROFILER: {delta:.6f} in '{txt}'")

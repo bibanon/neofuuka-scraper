@@ -6,7 +6,7 @@ import re
 from .ItemFile import *
 from .Utils import *
 
-class ItemPost():
+class ItemPostFull():
 	# this is a full post with all data that is only kept in the insert queue
 	
 	def __init__(self, topic = None, data = None):
@@ -17,8 +17,8 @@ class ItemPost():
 		
 		self.number = None
 		self.time_posted = None
-		self.time_deleted_post = None # not used, in tmp
-		self.time_deleted_file = None # should be a bool?
+		self.time_deleted_post = None # not used, see cache instead
+		self.time_deleted_file = None # should this be a bool?
 		self.poster_name = None
 		self.poster_trip = None
 		self.poster_capcode = None
@@ -49,7 +49,7 @@ class ItemPost():
 	# no need to include fields that never change
 	def get_hash(self):
 		return \
-			get_hash_obj([
+			checksum([
 				self.number,
 				self.time_posted,
 				self.time_deleted_post,
@@ -57,8 +57,6 @@ class ItemPost():
 				self.poster_name,
 				self.poster_trip,
 				self.poster_capcode,
-				self.poster_country,
-				self.poster_userid,
 				self.subject,
 				self.comment,
 				self.spoiler, # jannies can change this!
@@ -67,7 +65,7 @@ class ItemPost():
 				
 				# trigger op insert if topic changes
 				(
-					self.topic.get_hash().hex()
+					self.topic.get_hash()
 					if self.is_opener() else
 					None
 				)
@@ -224,14 +222,20 @@ class ItemPost():
 		
 		return com
 
-class ItemPostTmp():
-	# this is a post meta obj that is always kept in memory, to keep track of changes
+class ItemPostCache():
+	# this is a post cache obj that is always kept in memory, to keep track of changes
 	
-	def __init__(self):
-		self.number = None
+	def __init__(self, post):
+		self.number = post.number
+		self.topic = post.topic
+		
 		self.hash = None
 		
 		self.time_deleted_post = None
 		self.time_deleted_file = None
 		
 		self.insert = False
+	
+	def set_insert(self):
+		self.insert = True
+		self.topic.posts_ins = True

@@ -32,9 +32,9 @@ class Inserter(Thread):
 			" SET deleted = %s, timestamp_expired = %s" \
 			" WHERE num = %s AND subnum = 0"
 		
-		query_insert = query_insert.format(self.board.name1)
-		query_update = query_update.format(self.board.name1)
-		query_delete = query_delete.format(self.board.name1)
+		query_insert = query_insert.format(self.board.get_name())
+		query_update = query_update.format(self.board.get_name())
+		query_delete = query_delete.format(self.board.get_name())
 		
 		while True:
 			if self.board.stop(): break
@@ -116,58 +116,61 @@ class Inserter(Thread):
 			
 			# prepare delete query values
 			
-			removals1 = None
-			removals2 = None
+			removals_topic = None
+			removals_post = None
 			
 			with self.board.lock:
-				removals1 = []
+				removals_topic = []
 				
 				for topic in self.board.topics:
-					removals2 = []
-					
-					for post in topic.posts:
-						if post.insert:
-							skip = False
-							
-							for post1 in self.board.save_posts:
-								if post.number == post1.number:
-									# post is waiting to be inserted
-									skip = True
-									break
-							
-							if skip:
-								continue
-							
-							post.insert = False
-							
-							values_delete.append([
-								(1 if post.time_deleted_post else 0),
-								(asagi_timestamp_conv(post.time_deleted_post) if post.time_deleted_post else 0),
-								(post.number)
-							])
-							
-							if (
-								post.time_deleted_post and
-								post.number != topic.number
-							):
-								# remove deleted posts from topic
+					if topic.posts_ins:
+						removals_post = []
+						
+						for post in topic.posts.values():
+							if post.insert:
+								skip = False
 								
-								# occasionally there can be an inconsistency where a post disappears and reappears?
-								# if this happens the post will be re-added and un-deleted, so nothing goes wrong
+								for post1 in self.board.save_posts:
+									if post.number == post1.number:
+										# post is waiting to be inserted
+										skip = True
+										break
 								
-								removals2.append(post)
-					
-					for item in removals2:
-						topic.posts.remove(item)
+								if skip:
+									continue
+								
+								post.insert = False
+								
+								values_delete.append([
+									(1 if post.time_deleted_post else 0),
+									(asagi_timestamp_conv(post.time_deleted_post) if post.time_deleted_post else 0),
+									(post.number)
+								])
+								
+								if (
+									post.time_deleted_post and
+									post.number != topic.number
+								):
+									# remove deleted posts from topic
+									
+									# occasionally there can be an inconsistency where a post disappears and reappears?
+									# if this happens the post will be re-added and un-deleted, so nothing goes wrong
+									
+									removals_post.append(post)
+						
+						for item in removals_post:
+							topic.posts.pop(item.number, None)
+						
+						topic.update_posts_ins()
 					
 					if (
 						topic.time_deleted or
 						topic.time_archived
 					):
 						# remove dead topics
-						removals1.append(topic)
+						removals_topic.append(topic)
 				
-				for item in removals1:
+				for item in removals_topic:
 					self.board.topics.remove(item)
 			
 			if (
@@ -217,7 +220,7 @@ class Inserter(Thread):
 					if len(hashes):
 						cursor = self.board.database.cursor()
 						
-						cursor.execute("SELECT * FROM `{}_images` WHERE media_hash IN ({})".format(self.board.name1, ",".join(hashes)))
+						cursor.execute("SELECT * FROM `{}_images` WHERE media_hash IN ({})".format(self.board.get_name(), ",".join(hashes)))
 						
 						rows = {}
 						
@@ -268,8 +271,8 @@ class Inserter(Thread):
 				self.board.sleep(1.0)
 				continue
 			
-			if len(posts) > 30:
-				self.board.sleep(0.2)
+			if len(posts) > 100:
+				self.board.sleep(0.1)
 			else:
 				self.board.sleep(0.5)
 			

@@ -139,12 +139,12 @@ class FetcherPosts(Thread):
 						):
 							self.board.log(self, f"Topic #{topic.number} has been deleted")
 							
-							for post in topic.posts:
-								if post.number == topic.number:
-									# set time deleted on topic's post_tmp
-									post.time_deleted_post = topic.time_deleted
-									post.insert = True
-									break
+							post = topic.posts.get(topic.number)
+							
+							if post:
+								# set time deleted on opener's ItemPostCache
+								post.time_deleted_post = topic.time_deleted
+								post.set_insert()
 						else:
 							self.board.log(self, f"Topic #{topic.number} has been pruned")
 					
@@ -189,7 +189,7 @@ class FetcherPosts(Thread):
 			
 			with self.board.lock:
 				for post_d in data["posts"]:
-					post = ItemPost(topic, post_d)
+					post = ItemPostFull(topic, post_d)
 					
 					if not post.valid:
 						self.board.log(self, "Post object creation failed [weird]")
@@ -204,13 +204,13 @@ class FetcherPosts(Thread):
 			# check for deleted posts
 			
 			with self.board.lock:
-				for post_tmp in topic.posts:
+				for post in topic.posts.values():
 					if (
-						post_tmp.time_deleted_post == None and
-						not post_tmp.number in posts_dict
+						post.time_deleted_post == None and
+						not post.number in posts_dict
 					):
-						post_tmp.time_deleted_post = int(time.time())
-						post_tmp.insert = True
+						post.time_deleted_post = int(time.time())
+						post.set_insert()
 			
 			# topic successfully updated and still exists
 			
@@ -234,5 +234,5 @@ class FetcherPosts(Thread):
 					self.board.log(self, f"Topic #{topic.number} has been semi-deleted")
 					topic.time_deleted = int(time.time())
 			
-			self.board.sleep(0.1)
+			self.board.sleep(0.03)
 			continue

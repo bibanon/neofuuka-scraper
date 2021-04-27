@@ -19,7 +19,7 @@ def main(argv):
 		config = json.loads(config)
 		config = config["scraper"]
 	except:
-		print("config fail")
+		print("Config syntax error!")
 		return 1
 	
 	app = scraper.Scraper(config, argv)

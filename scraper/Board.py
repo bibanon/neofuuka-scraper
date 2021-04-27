@@ -22,19 +22,20 @@ class Board(multiprocessing.Process):
 	def __init__(self, scraper, name, conf, args):
 		super().__init__()
 		
+		# validate name
+		if re.match(r"^([a-zA-Z0-9_\-])+$", name) == None:
+			raise Exception("Board name is invalid")
+		
+		# multiprocessing.Process stuff
+		self.name = f"Scraper /{name}/"
+		self.daemon = True
+		
 		self.name1 = name
 		self.conf = conf
 		self.args = args
 		
 		self.shared = scraper.shared
 		self.master = scraper.pid
-		
-		self.name = f"Scraper /{self.name1}/"
-		self.daemon = True
-		
-		# validate name
-		if re.match(r"^([a-zA-Z0-9_\-])+$", self.name1) == None:
-			raise Exception("Board name is invalid")
 		
 		# stop signal
 		self.stop1 = False
@@ -51,8 +52,8 @@ class Board(multiprocessing.Process):
 		
 		# data
 		self.topics = None # list of active topics
-		self.save_posts = None # queue of posts waiting to be inserted
-		self.save_files = None # queue of posts waiting to be downloaded
+		self.save_posts = None # queue of posts (ItemPostFull) waiting to be inserted
+		self.save_files = None # queue of files (ItemFile) waiting to be downloaded
 		# self.save_hashes = None # for inserting calculated file hashes in new schema
 		
 		# other info
@@ -166,7 +167,7 @@ class Board(multiprocessing.Process):
 		
 		if source == None: source = self
 		
-		source_name = f"/{self.name1}/ {source.__class__.__name__}"
+		source_name = f"/{self.get_name()}/ {source.__class__.__name__}"
 		if isinstance(source, Thread): source_name = source.name
 		
 		# if "DBG " in text: return
@@ -178,7 +179,7 @@ class Board(multiprocessing.Process):
 		
 		'''
 		with self.lock_log:
-			file = open(f"./scraper.log.{self.name1}.txt", "a", encoding="utf8")
+			file = open(f"./scraper.log.{self.get_name()}.txt", "a", encoding="utf8")
 			file.write(msg + "\n")
 			file.close()
 		'''
@@ -281,15 +282,23 @@ class Board(multiprocessing.Process):
 		self.log(self, ("Remote has index live? " + str(self.info_has_index_live)))
 		self.log(self, ("Remote has index arch? " + str(self.info_has_index_arch)))
 	
-	def get_source_name(self):
-		return (self.conf.get("sourceBoard") if self.conf.get("sourceBoard") else self.name1)
+	def get_name(self):
+		return self.name1
+	
+	def get_name_src(self):
+		return (self.conf.get("sourceBoard") if self.conf.get("sourceBoard") else self.get_name())
+	
+	def get_link_base(self):
+		return (self.conf.get("sourceLinkPosts") + "/" + self.get_name_src())
 	
 	def get_link_index_live(self):
-		name = ("catalog" if self.conf.get("catalogScrapeEnable", False) else "threads")
-		return (self.conf.get("sourceLinkPosts") + "/" + self.get_source_name() + "/" + name + ".json")
+		return (
+			self.get_link_base() + "/" +
+			("catalog" if self.conf.get("catalogScrapeEnable", False) else "threads") + ".json"
+		)
 	
 	def get_link_index_arch(self):
-		return (self.conf.get("sourceLinkPosts") + "/" + self.get_source_name() + "/archive.json")
+		return (self.get_link_base() + "/archive.json")
 
 class WorkerData(Thread):
 	def run(self):

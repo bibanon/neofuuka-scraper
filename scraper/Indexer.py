@@ -119,7 +119,7 @@ class Indexer(Thread):
 								):
 									# this topic has no replies, no need to fetch
 									
-									post = ItemPost(topic, topic_d)
+									post = ItemPostFull(topic, topic_d)
 									
 									if post.valid:
 										did_fast = True
@@ -172,7 +172,7 @@ class Indexer(Thread):
 										posts_d = ([topic_d] + topic_d["last_replies"])
 										
 										for post_d in posts_d:
-											post = ItemPost(topic, post_d)
+											post = ItemPostFull(topic, post_d)
 											
 											if post.valid:
 												posts.append(post)

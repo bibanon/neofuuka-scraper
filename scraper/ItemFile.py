@@ -33,17 +33,17 @@ class ItemFile():
 	def get_link(self):
 		return (
 			self.board.conf.get("sourceLinkFiles" + ("thb" if self.type1 == FileType1.THB else "src").capitalize()) +
-			"/" + self.board.get_source_name() + "/" + str(self.time) + ("s.jpg" if self.type1 == FileType1.THB else ("." + self.type))
+			"/" + self.board.get_name_src() + "/" + str(self.time) + ("s.jpg" if self.type1 == FileType1.THB else ("." + self.type))
 		)
 	
 	def get_path(self):
 		path = self.board.conf.get("fileSavePath")
-		path = path.format(board = self.board.name1)
+		path = path.format(board = self.board.get_name())
 		
 		path = \
 			os.path.join(
 				path,
-				self.board.name1,
+				self.board.get_name(),
 				("thumb" if self.type1 == FileType1.THB else "image"),
 				str(self.time1)[0:4],
 				str(self.time1)[4:6],

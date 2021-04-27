@@ -67,7 +67,7 @@ class Inserter(Thread):
 					comment = post.comment
 					comment = (comment if comment else None)
 					comment = (asagi_comment_parse(comment) if comment else comment)
-					comment = comment[0:16384] # mysql text limits bytes not chars
+					comment = (comment[0:16384] if comment else comment) # mysql text limits bytes not chars
 					
 					extra = post.get_extra()
 					extra = (json_encode_obj(extra) if extra else extra)

@@ -147,6 +147,11 @@ class ItemPostFull():
 				out["uniqueIps"] = str(self.topic.posters)
 		
 		if self.data:
+			if self.data.get("board_flag"):
+				out["troll_country_code"] = self.data.get("board_flag")
+				out["troll_country_name"] = self.data.get("flag_name")
+			
+			# old board flag format, remove later
 			if self.data.get("troll_country"):
 				out["troll_country_code"] = self.data.get("troll_country")
 				out["troll_country_name"] = self.data.get("country_name")

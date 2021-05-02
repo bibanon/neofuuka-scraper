@@ -59,6 +59,14 @@ def asagi_comment_parse(a):
 			a
 		)
 	
+	# dice roll
+	if "<b>" in a:
+		a = re.sub(
+			"<b>(Roll(.*?))</b>",
+			"[b]\\1[/b]",
+			a
+		)
+	
 	# code tags
 	if "<pre" in a:
 		a = re.sub("<pre[^>]*>", "[code]", a)

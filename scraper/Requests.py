@@ -33,18 +33,18 @@ class Requests():
 		res = RequestRes()
 		
 		with self.types[type].lock:
-			if self.types[type].interval > 0.001:
+			if self.types[type].interval >= 0.001:
 				self.board.sleep(self.types[type].interval - (time.time() - self.types[type].timelast))
 			
 			self.types[type].timelast = time.time()
 		
 		if (
 			type == RequestType.TEXT and
-			self.board.conf.get("requestThrottleGlobal") > 0.001
+			self.board.conf.get("requestThrottleGlobal") >= 0.001
 		):
 			self.board.shared.request_lock.acquire()
-			since = (time.time() - self.board.shared.request_time.value)
-			self.board.sleep(self.board.conf.get("requestThrottleGlobal") - since)
+			tmp = (time.time() - self.board.shared.request_time.value)
+			self.board.sleep(self.board.conf.get("requestThrottleGlobal") - tmp)
 			self.board.shared.request_time.value = time.time()
 			self.board.shared.request_lock.release()
 		

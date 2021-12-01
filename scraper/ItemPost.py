@@ -14,6 +14,7 @@ class ItemPostFull():
 		self.topic = None
 		
 		self.data = None # raw json data
+		self.valid = False # was successfully parsed from json
 		
 		self.number = None
 		self.time_posted = None
@@ -26,7 +27,7 @@ class ItemPostFull():
 		self.poster_userid = None # removed from json when archived
 		self.subject = None
 		self.comment = None # kept as original html
-		self.spoiler = None # independent of file
+		self.spoiler = False # independent of file
 		self.file_time = None
 		self.file_hash = None
 		self.file_name = None
@@ -34,8 +35,6 @@ class ItemPostFull():
 		self.file_size = None
 		self.file_dims_src = None
 		self.file_dims_thb = None
-		
-		self.valid = False # was successfully parsed from json
 		
 		if topic:
 			self.topic = topic

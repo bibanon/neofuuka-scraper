@@ -1,3 +1,4 @@
+mysqlclient~=2.1.0
 psutil~=5.8.0
 pymysql~=1.0
 pytz~=2020.0

@@ -213,14 +213,15 @@ class Inserter(Thread):
 					
 					for post in posts:
 						if post.file_time:
-							tmp = post.get_file_hash_b64()
-							tmp = self.board.database.escape(tmp)
-							hashes.append(tmp)
+							hashes.append(post.get_file_hash_b64())
 					
 					if len(hashes):
 						cursor = self.board.database.cursor()
 						
-						cursor.execute("SELECT * FROM `{}_images` WHERE media_hash IN ({})".format(self.board.get_name(), ",".join(hashes)))
+						query = "SELECT * FROM `{}_images` WHERE media_hash IN ({})"
+						query = query.format(self.board.get_name(), ",".join(["%s"] * len(hashes)))
+						
+						cursor.execute(query, hashes)
 						
 						rows = {}
 						

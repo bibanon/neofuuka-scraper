@@ -1,5 +1,13 @@
+import sys
+import enum
 import pymysql
 import threading
+
+try:
+	import MySQLdb
+	import MySQLdb.cursors
+except:
+	pass
 
 class Database():
 	def __init__(self, board):
@@ -9,7 +17,12 @@ class Database():
 		
 		self.lock.acquire()
 		
-		self.conn = None # database handle
+		self.conn = None
+		
+		self.module = DatabaseModule.PYMYSQL
+		
+		if "MySQLdb" in sys.modules:
+			self.module = DatabaseModule.MYSQLDB
 	
 	def connect(self):
 		if self.conn == None:
@@ -18,16 +31,31 @@ class Database():
 			self.board.log(self, "Connecting to database...")
 			
 			try:
-				self.conn = \
-					pymysql.connect(
-						host = self.board.conf.get("dbSrvHost", "localhost"),
-						port = self.board.conf.get("dbSrvPort", 3306),
-						user = self.board.conf.get("dbUserName", "neofuuka"),
-						password = self.board.conf.get("dbUserPass", "neofuuka"),
-						db = self.board.conf.get("dbDatabase", "neofuuka"),
-						charset = self.board.conf.get("dbCharset", "utf8mb4"),
-						cursorclass = pymysql.cursors.DictCursor,
-					)
+				args = {
+					"host": self.board.conf.get("dbSrvHost", "localhost"),
+					"port": self.board.conf.get("dbSrvPort", 3306),
+					"user": self.board.conf.get("dbUserName", "neofuuka"),
+					"password": self.board.conf.get("dbUserPass", "neofuuka"),
+					"db": self.board.conf.get("dbDatabase", "neofuuka"),
+					"charset": self.board.conf.get("dbCharset", "utf8mb4"),
+				}
+				
+				if self.module == DatabaseModule.PYMYSQL:
+					self.conn = \
+						pymysql.connect(
+							**args,
+							cursorclass = pymysql.cursors.DictCursor
+						)
+				
+				if self.module == DatabaseModule.MYSQLDB:
+					self.conn = \
+						MySQLdb.connect(
+							**args,
+							cursorclass = MySQLdb.cursors.DictCursor
+						)
+				
+				if self.conn == None:
+					raise Exception("Invalid database module")
 				
 				self.board.log(self, "Database connection successful")
 				
@@ -66,11 +94,12 @@ class Database():
 	def commit(self):
 		return self.conn.commit()
 	
-	def escape(self, value):
-		return self.conn.escape(value)
-	
 	def act_start(self, block=True, timeout=-1):
 		return self.lock.acquire(block, timeout)
 	
 	def act_finish(self):
 		return self.lock.release()
+
+class DatabaseModule(enum.Enum):
+	PYMYSQL = enum.auto()
+	MYSQLDB = enum.auto()

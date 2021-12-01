@@ -84,7 +84,9 @@ WantedBy=multi-user.target
 
 ## Configuration
 
-The configuration file `scraper.json` looks like this:
+The default configuration file is `./scraper.json`. You can change this with `--cfg <filename>`.
+
+It should look like this:
 
 ```json
 {

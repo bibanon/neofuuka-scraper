@@ -1,5 +1,5 @@
-mysqlclient~=2.1.0
-psutil~=5.8.0
+mysqlclient~=2.1
+psutil~=5.8
 pymysql~=1.0
-pytz~=2020.0
-requests~=2.23
+pytz~=2021.2
+requests~=2.26

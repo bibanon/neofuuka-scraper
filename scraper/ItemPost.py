@@ -229,6 +229,16 @@ class ItemPostFull():
 
 class ItemPostCache():
 	# this is a post cache obj that is always kept in memory, to keep track of changes
+	# there will be tens of thousands of these in memory at all times, so it must be small
+	
+	__slots__ = [
+		"number",
+		"topic",
+		"hash",
+		"time_deleted_post",
+		"time_deleted_file",
+		"insert",
+	]
 	
 	def __init__(self, post):
 		self.number = post.number

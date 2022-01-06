@@ -45,7 +45,10 @@ class FetcherFiles(Thread):
 						# delete the file and redownload
 						os.path.remove(file_path)
 					else:
-						if self.board.conf.get("fileTouchOnDupe", False):
+						if (
+							file.type1 == FileType1.SRC and
+							self.board.conf.get("fileTouchOnDupe", False)
+						):
 							# update last mod time
 							os.utime(file_path)
 						

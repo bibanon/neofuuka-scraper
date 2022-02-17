@@ -71,7 +71,12 @@ class FetcherFiles(Thread):
 							raise Exception(f"code {res.code}")
 						
 						if file.type1 == FileType1.SRC:
-							if len(res.data) != file.size:
+							# some really old uploads have very incorrect sizes
+							# so only trust sizes for relatively recent uploads
+							if (
+								len(res.data) != file.size and
+								(file.time / 1000) > (time.time() - 864000)
+							):
 								raise Exception("bad size")
 							
 							hash = hashlib.md5()

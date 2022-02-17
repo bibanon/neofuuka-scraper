@@ -44,7 +44,9 @@ class Indexer(Thread):
 					continue
 				
 				if res.code == 304:
-					self.board.log(self, "Index not modified")
+					with self.board.lock:
+						self.board.log(self, f"Not Modified - {self.get_state_str()}")
+					
 					self.board.sleep(self.board.conf["timeBetweenIndexUpdates"])
 					continue
 				
@@ -320,7 +322,8 @@ class Indexer(Thread):
 						
 						count += 1
 						
-						if count >= target: break
+						if count >= target:
+							break
 						
 						continue
 					
@@ -359,11 +362,17 @@ class Indexer(Thread):
 			else:
 				self.board.log(self, "Index was empty, ignoring missing topics [weird]")
 			
-			# self.board.log(self, f"Index updated, tracking {len(self.board.topics)} topics")
-			self.board.log(self, f"Updated mod={count_mod - count_cat}+{count_cat} idx={len(self.board.topics)} ins={len(self.board.save_posts)} img={len(self.board.save_files)}")
+			self.board.log(self, f"Updated - mod={count_mod - count_cat}+{count_cat} {self.get_state_str()}")
 			
 			self.board.lock.release()
 			
 			self.board.sleep(self.board.conf["timeBetweenIndexUpdates"])
 			
 			continue
+	
+	def get_state_str(self):
+		return " ".join([
+			f"idx={len(self.board.topics)}",
+			f"ins={len(self.board.save_posts)}",
+			f"img={len(self.board.save_files)}",
+		])

@@ -16,11 +16,11 @@ class Inserter(Thread):
 			" preview_h, media_filename, media_w, media_h, media_size, media_hash, media_orig, spoiler," \
 			" deleted, capcode, name, trip, title, comment, sticky, locked, poster_hash, poster_country, exif)" \
 			" SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s FROM DUAL" \
-			" WHERE NOT EXISTS (SELECT 1 FROM `{0}` WHERE num = %s AND subnum = 0)" \
-			" AND NOT EXISTS (SELECT 1 FROM `{0}_deleted` WHERE num = %s AND subnum = 0)"
+			" WHERE NOT EXISTS (SELECT 1 FROM `{0}` FORCE INDEX (num_subnum_index) WHERE num = %s AND subnum = 0)" \
+			" AND NOT EXISTS (SELECT 1 FROM `{0}_deleted` FORCE INDEX (num_subnum_index) WHERE num = %s AND subnum = 0)"
 		
 		query_update = \
-			"UPDATE `{0}`" \
+			"UPDATE `{0}` FORCE INDEX (num_subnum_index)" \
 			" SET title = %s, comment = %s, spoiler = %s," \
 			" sticky = (%s OR sticky), locked = (%s OR locked)," \
 			" deleted = 0, timestamp_expired = 0," \
@@ -28,7 +28,7 @@ class Inserter(Thread):
 			" WHERE num = %s AND subnum = 0"
 		
 		query_delete = \
-			"UPDATE `{0}`" \
+			"UPDATE `{0}` FORCE INDEX (num_subnum_index)" \
 			" SET deleted = %s, timestamp_expired = %s" \
 			" WHERE num = %s AND subnum = 0"
 		
@@ -218,7 +218,7 @@ class Inserter(Thread):
 					if len(hashes):
 						cursor = self.board.database.cursor()
 						
-						query = "SELECT * FROM `{}_images` WHERE media_hash IN ({})"
+						query = "SELECT * FROM `{}_images` FORCE INDEX (media_hash_index) WHERE media_hash IN ({})"
 						query = query.format(self.board.get_name(), ",".join(["%s"] * len(hashes)))
 						
 						cursor.execute(query, hashes)

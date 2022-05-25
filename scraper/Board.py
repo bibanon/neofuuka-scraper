@@ -63,7 +63,7 @@ class Board(multiprocessing.Process):
 		self.fix_config()
 	
 	def run(self):
-		self.log(self, "Board start")
+		self.log(self, "Board start (pid {})".format(os.getpid()))
 		
 		if self.stop(): return
 		

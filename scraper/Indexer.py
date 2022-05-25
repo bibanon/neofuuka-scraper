@@ -303,8 +303,17 @@ class Indexer(Thread):
 						if topics_in_board.get(topic_d): continue
 						if topics_in_index.get(topic_d): continue
 						
-						# TODO: query database and exclude topics marked as archived
-						# or maybe use a cache like redis?
+						try:
+							if self.board.storage.conn:
+								value = \
+									self.board.storage.conn.get(
+										name=self.board.storage.key([self.board.get_name(), topic_d, "archived"]),
+									)
+								
+								if value:
+									continue
+						except:
+							pass
 						
 						topic = ItemTopic()
 						

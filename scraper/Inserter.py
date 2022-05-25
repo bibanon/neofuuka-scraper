@@ -169,6 +169,17 @@ class Inserter(Thread):
 					):
 						# remove dead topics
 						removals_topic.append(topic)
+					
+					if topic.time_archived:
+						try:
+							if self.board.storage.conn:
+								self.board.storage.conn.set(
+									name=self.board.storage.key([self.board.get_name(), topic.number, "archived"]),
+									value="1",
+									ex=(60*60*24*20),
+								)
+						except:
+							pass
 				
 				for item in removals_topic:
 					self.board.topics.remove(item)

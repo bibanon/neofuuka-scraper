@@ -174,7 +174,7 @@ class Inserter(Thread):
 						try:
 							if self.board.storage.conn:
 								self.board.storage.conn.set(
-									name=self.board.storage.key([self.board.get_name(), topic.number, "archived"]),
+									name=self.board.storage.key(["board", self.board.get_name(), "topic", topic.number, "archived"]),
 									value="1",
 									ex=(60*60*24*20),
 								)

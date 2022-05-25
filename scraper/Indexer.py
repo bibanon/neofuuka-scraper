@@ -307,7 +307,7 @@ class Indexer(Thread):
 							if self.board.storage.conn:
 								value = \
 									self.board.storage.conn.get(
-										name=self.board.storage.key([self.board.get_name(), topic_d, "archived"]),
+										name=self.board.storage.key(["board", self.board.get_name(), "topic", topic_d, "archived"]),
 									)
 								
 								if value:

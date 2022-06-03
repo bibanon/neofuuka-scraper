@@ -19,7 +19,7 @@ class Indexer(Thread):
 	def run(self):
 		super().run()
 		
-		self.board.sleep(1)
+		self.board.sleep(3)
 		
 		while True:
 			if self.board.stop(): break
@@ -290,14 +290,19 @@ class Indexer(Thread):
 					data.sort(reverse=True)
 					
 					target = self.board.conf.get("indexArchivePercent", 0.50)
-					target = (len(data) * target)
-					target = math.ceil(target)
+					target = math.ceil(len(data) * target)
 					
-					count = 0
+					count_all = 0
+					count_use = 0
 					
 					for topic_d in data:
 						if type(topic_d) is not int:
 							raise Exception()
+						
+						count_all += 1
+						
+						if count_all > target:
+							break
 						
 						# ignore topics we already have
 						if topics_in_board.get(topic_d): continue
@@ -329,16 +334,13 @@ class Indexer(Thread):
 						
 						topics_in_index[topic.number] = True
 						
-						count += 1
-						
-						if count >= target:
-							break
+						count_use += 1
 						
 						continue
 					
 					self.archived_once = True
 					
-					self.board.log(self, f"Archive index got {count} topics")
+					self.board.log(self, f"Archive index got {count_use} topics")
 				except:
 					self.board.log(self, "Indexing archive failed")
 					pass

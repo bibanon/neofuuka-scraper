@@ -29,6 +29,7 @@ class ItemPostFull():
 		self.comment = None # kept as original html
 		self.spoiler = False # independent of file
 		self.file_time = None
+		self.file_time_s = None
 		self.file_hash = None
 		self.file_name = None
 		self.file_type = None
@@ -117,6 +118,7 @@ class ItemPostFull():
 			
 			if data.get("ext") != None:
 				self.file_time = int(data["tim"])
+				self.file_time_s = (int(self.file_time / 1000) if self.file_time > 1000000000000000 else self.file_time)
 				self.file_hash = base64.b64decode(data["md5"])
 				self.file_name = html.unescape(data["filename"])
 				self.file_type = data["ext"].replace(".", "")
@@ -140,6 +142,9 @@ class ItemPostFull():
 	# dont store this if thread is archived, ips are lost
 	def get_extra(self):
 		out = {}
+		
+		if self.file_time != self.file_time_s:
+			out["tim"] = self.file_time
 		
 		if self.number == self.topic.number:
 			if self.topic.posters != None:

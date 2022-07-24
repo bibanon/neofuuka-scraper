@@ -1,0 +1,24 @@
+## root.my.cnf
+## mariadb config file
+## This is just used to safely store connection details including password.
+
+[client-server]
+# Uncomment these if you want to use a nonstandard connection to MariaDB
+#socket=/tmp/mysql.sock
+#port=3306
+
+
+## This will be passed to all MariaDB clients
+[client]
+#host=localhost
+user=root
+password=PASSWORD_REMOVED
+
+
+# https://mariadb.com/kb/en/mysqldump/
+[mysqldump]
+comments=TRUE
+tz-utc=TRUE
+single-transaction=TRUE
+skip-lock-tables=TRUE
+

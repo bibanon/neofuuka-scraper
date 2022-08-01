@@ -1,10 +1,8 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+  release:
+    types: published
 
 jobs:
   
@@ -21,7 +19,6 @@ jobs:
       run: docker build . --file Dockerfile --tag neofuuka
       
     - name: Log in to registry
-    # This is where you will update the PAT to GITHUB_TOKEN
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
       
     - name: Push image
@@ -32,8 +29,6 @@ jobs:
         VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
         # Strip "v" prefix from tag name
         [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-        # Use Docker `latest` tag convention
-        [ "$VERSION" == "master" ] && VERSION=latest
         echo IMAGE_ID=$IMAGE_ID
         echo VERSION=$VERSION
         docker tag neofuuka $IMAGE_ID:$VERSION

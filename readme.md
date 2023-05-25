@@ -177,7 +177,7 @@ CREATE TABLE `%%BOARD%%` (
 	`op` tinyint(1) NOT NULL DEFAULT 0,
 	`timestamp` int(10) unsigned NOT NULL,
 	`timestamp_expired` int(10) unsigned NOT NULL,
-	`preview_orig` varchar(20) DEFAULT NULL,
+	`preview_orig` varchar(50) DEFAULT NULL,
 	`preview_w` smallint(5) unsigned NOT NULL DEFAULT 0,
 	`preview_h` smallint(5) unsigned NOT NULL DEFAULT 0,
 	`media_filename` text DEFAULT NULL,
@@ -185,7 +185,7 @@ CREATE TABLE `%%BOARD%%` (
 	`media_h` smallint(5) unsigned NOT NULL DEFAULT 0,
 	`media_size` int(10) unsigned NOT NULL DEFAULT 0,
 	`media_hash` varchar(25) DEFAULT NULL,
-	`media_orig` varchar(20) DEFAULT NULL,
+	`media_orig` varchar(50) DEFAULT NULL,
 	`spoiler` tinyint(1) NOT NULL DEFAULT 0,
 	`deleted` tinyint(1) NOT NULL DEFAULT 0,
 	`capcode` varchar(1) NOT NULL DEFAULT 'N',
@@ -225,7 +225,7 @@ CREATE TABLE `%%BOARD%%_deleted` (
 	`op` tinyint(1) NOT NULL DEFAULT 0,
 	`timestamp` int(10) unsigned NOT NULL,
 	`timestamp_expired` int(10) unsigned NOT NULL,
-	`preview_orig` varchar(20) DEFAULT NULL,
+	`preview_orig` varchar(50) DEFAULT NULL,
 	`preview_w` smallint(5) unsigned NOT NULL DEFAULT 0,
 	`preview_h` smallint(5) unsigned NOT NULL DEFAULT 0,
 	`media_filename` text DEFAULT NULL,
@@ -233,7 +233,7 @@ CREATE TABLE `%%BOARD%%_deleted` (
 	`media_h` smallint(5) unsigned NOT NULL DEFAULT 0,
 	`media_size` int(10) unsigned NOT NULL DEFAULT 0,
 	`media_hash` varchar(25) DEFAULT NULL,
-	`media_orig` varchar(20) DEFAULT NULL,
+	`media_orig` varchar(50) DEFAULT NULL,
 	`spoiler` tinyint(1) NOT NULL DEFAULT 0,
 	`deleted` tinyint(1) NOT NULL DEFAULT 0,
 	`capcode` varchar(1) NOT NULL DEFAULT 'N',
@@ -266,9 +266,9 @@ CREATE TABLE `%%BOARD%%_deleted` (
 CREATE TABLE `%%BOARD%%_images` (
   `media_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `media_hash` varchar(25) NOT NULL,
-  `media` varchar(20) DEFAULT NULL,
-  `preview_op` varchar(20) DEFAULT NULL,
-  `preview_reply` varchar(20) DEFAULT NULL,
+  `media` varchar(50) DEFAULT NULL,
+  `preview_op` varchar(50) DEFAULT NULL,
+  `preview_reply` varchar(50) DEFAULT NULL,
   `total` int(10) unsigned NOT NULL DEFAULT 0,
   `banned` smallint(5) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`media_id`),
@@ -347,7 +347,7 @@ BEGIN
   DELETE FROM `%%BOARD%%_threads` WHERE thread_num = tnum;
 END;;
 
-CREATE PROCEDURE `insert_image_%%BOARD%%` (n_media_hash VARCHAR(25), n_media VARCHAR(20), n_preview VARCHAR(20), n_op INT)
+CREATE PROCEDURE `insert_image_%%BOARD%%` (n_media_hash VARCHAR(25), n_media VARCHAR(50), n_preview VARCHAR(50), n_op INT)
 BEGIN
   IF n_op = 1 THEN
     INSERT INTO `%%BOARD%%_images` (media_hash, media, preview_op, total)

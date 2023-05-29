@@ -2,6 +2,7 @@ import time
 import enum
 import threading
 import hashlib
+import random
 import requests
 
 from .Utils import *
@@ -65,9 +66,8 @@ class Requests():
 		
 		request["headers"]["User-Agent"] = self.board.conf.get("requestUserAgent", "")
 		
-		if type == RequestType.TEXT:
-			# bypass cloudflare cache with query
-			request["params"]["v"] = int(time.time())
+		# bypass cloudflare cache with query
+		request["params"]["v"] = random.randint(100000, 999999)
 		
 		if since:
 			with self.lock:

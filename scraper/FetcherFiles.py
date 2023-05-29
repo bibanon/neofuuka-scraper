@@ -39,13 +39,21 @@ class FetcherFiles(Thread):
 				if os.path.isfile(file_path):
 					if (
 						file.type1 == FileType1.SRC and
-						self.board.conf.get("fileTouchOnDupe", False)
+						self.board.conf.get("fileMismatchRedo", False) and
+						os.path.getsize(file_path) != file.size
 					):
-						# update last mod time
-						os.utime(file_path)
-					
-					self.board.sleep(0.003)
-					continue
+						# delete the file and redownload
+						os.path.remove(file_path)
+					else:
+						if (
+							file.type1 == FileType1.SRC and
+							self.board.conf.get("fileTouchOnDupe", False)
+						):
+							# update last mod time
+							os.utime(file_path)
+						
+						self.board.sleep(0.003)
+						continue
 				
 				# self.board.log(self, f"Downloading {file.time}")
 				
@@ -61,6 +69,22 @@ class FetcherFiles(Thread):
 					try:
 						if res.code != 200:
 							raise Exception(f"code {res.code}")
+						
+						if file.type1 == FileType1.SRC:
+							# some really old uploads have very incorrect sizes
+							# so only trust sizes for relatively recent uploads
+							if (
+								len(res.data) != file.size and
+								(file.time / 1000) > (time.time() - 864000)
+							):
+								raise Exception("bad size")
+							
+							hash = hashlib.md5()
+							hash.update(res.data)
+							hash = hash.digest()
+							
+							if hash != file.hash:
+								raise Exception("bad hash")
 						
 						os.makedirs(
 							name = os.path.dirname(file_path),

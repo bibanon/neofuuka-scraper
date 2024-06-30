@@ -141,7 +141,10 @@ class ItemPostFull():
 	def get_extra(self):
 		out = {}
 		
-		if self.file_time != self.get_file_time_db():
+		if (
+			self.file_time and
+			self.file_time != self.get_file_time_db()
+		):
 			out["tim"] = self.file_time
 		
 		if self.number == self.topic.number:
@@ -196,6 +199,7 @@ class ItemPostFull():
 	
 	def get_file_time_db(self):
 		if (
+			self.file_time and
 			self.file_time > 1000000000000000 and
 			self.board.conf.get("fileUseShortNames")
 		):

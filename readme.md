@@ -121,8 +121,8 @@ The object key defines the board's name in the database. You may use `sourceBoar
 * `typeOutput` - The type of data format to output to. Only `asagi` is supported for now. *Value is not actually checked.*
 * `sourceBoard` - Board's name on 4chan. You can use this to scrape a board into a table with a different name.
 * `sourceLinkPosts` - Base URL for text data (json).
-* `sourceLinkFilesThb` - Base URL for thumbnail image files.
-* `sourceLinkFilesSrc` - Base URL for original image files.
+* `sourceLinkFilesThb` - Base URL for thumbnail media files.
+* `sourceLinkFilesSrc` - Base URL for original media files.
 * `dbSrvHost` - Database server host.
 * `dbSrvPort` - Database server port.
 * `dbUserName` - Database username.
@@ -130,11 +130,11 @@ The object key defines the board's name in the database. You may use `sourceBoar
 * `dbDatabase` - Database name.
 * `dbCharset` - Database connection charset. Always use `utf8mb4`.
 * `doSavePosts` - Enable saving post text data to database. Don't disable this. This probably shouldn't even be an option.
-* `doSaveFilesThb` - Enable saving thumbnail image files.
-* `doSaveFilesSrc` - Enable saving original image files.
+* `doSaveFilesThb` - Enable saving thumbnail media files.
+* `doSaveFilesSrc` - Enable saving original media files.
 * `threadsForPosts` - How many threads to use to download post text data (json). Usually no more than `1` or `2` are needed.
-* `threadsForFilesThb` - How many threads to use to download thumbnail image files. Suggested values are between `5` and `20`.
-* `threadsForFilesSrc` - How many threads to use to download original image files. Suggested values are between `2` and `5`.
+* `threadsForFilesThb` - How many threads to use to download thumbnail media files. Suggested values are between `5` and `20`.
+* `threadsForFilesSrc` - How many threads to use to download original media files. Suggested values are between `2` and `5`.
 * `catalogScrapeEnable` - Enable use of catalog data to scrape posts. Reduces request counts significantly for faster boards. More info above in the Catalog Scraping section.
 * `catalogScrapeTimeFreq` - How often a thread must be updating to be eligible for catalog scraping, in seconds. Suggested values are between `60` and `240`.
 * `catalogScrapeTimeWait` - How long to wait before doing a full scrape on a thread that was catalog scraped, in seconds. Suggested values are between `240` and `600`. Higher values will result in lower poster count accuracy.
@@ -144,9 +144,11 @@ The object key defines the board's name in the database. You may use `sourceBoar
 * `indexArchiveOnStartup` - Scrape archived threads when the scraper starts up. *Archive scraping is untested and may not work properly.*
 * `indexArchiveOnConnect` - Scrape archived threads when the scraper detects a connection issue (index fails to load several times in a row). *Archive scraping is untested and may not work properly.*
 * `topicDeleteThreshold` - What page a thread must be on before it is considered naturally pruned if it disappears. Suggested values are `8` or `9` for 10-page boards. Only applies if the board doesn't have an internal archive.
-* `fileSavePath` - Path on disk to save image files to. Currently uses the asagi file structure.
-* `fileTouchOnDupe` - Touch original image files to update their modification time when a duplicate is encountered. Thumbnails are never touched.
+* `fileSavePath` - Path on disk to save media files to. Currently uses the asagi file structure.
+* `fileMaxPostAge` - Maximum post age, in seconds, to save media files for. Useful if you offload old media out of `fileSavePath` and don't want it to be redownloaded on slow boards when the scraper is restarted.
+* `fileTouchOnDupe` - Touch original media files to update their modification time when a duplicate is encountered. Thumbnails are never touched.
 * `fileMismatchRedo` - If a file is about to be downloaded but already exists, but the existing file doesn't match what's expected, delete and redownload. Untested, may have issues.
+* `fileUseShortNames` - Use the old short (13 digit) timestamp filename format, from before 4chan added 3 extra digits to its filenames. Useful if you have an old database and have not yet increased the media name column size. Longer timestamps are truncated, but the original is saved in the `exif` column.
 * `fileDupeCheckLink` - Base URL to send HEAD requests to before downloading original image files, to check if they already exist. *Not yet implemented.*
 * `requestUserAgent` - User agent used for all requests.
 * `requestTimeoutText` - Request timeout for text requests. Suggested values are between `20` and `60`.

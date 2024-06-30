@@ -29,7 +29,6 @@ class ItemPostFull():
 		self.comment = None # kept as original html
 		self.spoiler = False # independent of file
 		self.file_time = None
-		self.file_time_s = None
 		self.file_hash = None
 		self.file_name = None
 		self.file_type = None
@@ -118,7 +117,6 @@ class ItemPostFull():
 			
 			if data.get("ext") != None:
 				self.file_time = int(data["tim"])
-				self.file_time_s = (int(self.file_time / 1000) if self.file_time > 1000000000000000 else self.file_time)
 				self.file_hash = base64.b64decode(data["md5"])
 				self.file_name = html.unescape(data["filename"])
 				self.file_type = data["ext"].replace(".", "")
@@ -143,7 +141,7 @@ class ItemPostFull():
 	def get_extra(self):
 		out = {}
 		
-		if self.file_time != self.file_time_s:
+		if self.file_time != self.get_file_time_db():
 			out["tim"] = self.file_time
 		
 		if self.number == self.topic.number:
@@ -195,6 +193,15 @@ class ItemPostFull():
 			return base64.b64encode(self.file_hash).decode("ascii")
 		
 		return None
+	
+	def get_file_time_db(self):
+		if (
+			self.file_time > 1000000000000000 and
+			self.board.conf.get("fileUseShortNames")
+		):
+			return int(self.file_time / 1000)
+		
+		return self.file_time
 	
 	def get_comment_clean(self):
 		com = self.comment

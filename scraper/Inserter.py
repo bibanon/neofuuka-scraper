@@ -1,3 +1,4 @@
+import time
 import json
 import base64
 import pymysql
@@ -220,11 +221,21 @@ class Inserter(Thread):
 					# process files after insert
 					# using batched IN query
 					
+					max_post_age = self.board.conf.get("fileMaxPostAge")
+					
 					hashes = []
 					
 					for post in posts:
-						if post.file_time:
-							hashes.append(post.get_file_hash_b64())
+						if not post.file_time:
+							continue
+						
+						if (
+							max_post_age and
+							(time.time() - post.time_posted) > max_post_age
+						):
+							continue
+						
+						hashes.append(post.get_file_hash_b64())
 					
 					if len(hashes):
 						cursor = self.board.database.cursor()
@@ -243,35 +254,39 @@ class Inserter(Thread):
 						
 						with self.board.lock:
 							for post in posts:
-								if post.file_time:
-									row = rows.get(post.get_file_hash_b64())
+								if not post.file_time:
+									continue
+								
+								row = rows.get(post.get_file_hash_b64())
+								
+								if not row:
+									continue
+								
+								if int(row["banned"]) != 0:
+									continue
+								
+								for type in FileType1:
+									# check if we're configured to save this type
+									if type == FileType1.THB and not self.board.conf.get("doSaveFilesThb"): continue
+									if type == FileType1.SRC and not self.board.conf.get("doSaveFilesSrc"): continue
 									
-									if (
-										row and
-										int(row["banned"]) == 0
-									):
-										for type in FileType1:
-											# check if we're configured to save this type
-											if type == FileType1.THB and not self.board.conf.get("doSaveFilesThb"): continue
-											if type == FileType1.SRC and not self.board.conf.get("doSaveFilesSrc"): continue
-											
-											file = ItemFile(post, type)
-											
-											try:
-												if type == FileType1.THB:
-													name = ("op" if post.is_opener() else "reply")
-													name = row["preview_" + name]
-													name = name.split("s.")[0]
-												else:
-													name = row["media"]
-													name = name.split(".")[0]
-												
-												# set asagi target name
-												file.time1 = int(name)
-												
-												self.board.save_files.append(file)
-											except:
-												pass
+									file = ItemFile(post, type)
+									
+									try:
+										if type == FileType1.THB:
+											name = ("op" if post.is_opener() else "reply")
+											name = row["preview_" + name]
+											name = name.split("s.")[0]
+										else:
+											name = row["media"]
+											name = name.split(".")[0]
+										
+										# set asagi target name
+										file.time1 = int(name)
+										
+										self.board.save_files.append(file)
+									except:
+										pass
 					
 					self.board.database.act_finish()
 					

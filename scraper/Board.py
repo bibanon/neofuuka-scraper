@@ -220,9 +220,12 @@ class Board(multiprocessing.Process):
 		self.conf["sourceLinkFilesThb"] = self.conf["sourceLinkFilesThb"].rstrip("/\\")
 		self.conf["sourceLinkFilesSrc"] = self.conf["sourceLinkFilesSrc"].rstrip("/\\")
 		
-		self.conf["threadsForPosts"] = min(self.conf.get("threadsForPosts", 0), 5)
-		self.conf["threadsForFilesThb"] = min(self.conf.get("threadsForFilesThb", 0), 10)
-		self.conf["threadsForFilesSrc"] = min(self.conf.get("threadsForFilesSrc", 0), 10)
+		self.conf["threadsForPosts"] = min(self.conf.get("threadsForPosts", 0), 10)
+		self.conf["threadsForFilesThb"] = min(self.conf.get("threadsForFilesThb", 0), 30)
+		self.conf["threadsForFilesSrc"] = min(self.conf.get("threadsForFilesSrc", 0), 30)
+		
+		if self.conf["threadsForFilesThb"] <= 0: self.conf["doSaveFilesThb"] = False
+		if self.conf["threadsForFilesSrc"] <= 0: self.conf["doSaveFilesSrc"] = False
 		
 		self.conf["timeBetweenIndexUpdates"] = max(self.conf.get("timeBetweenIndexUpdates", 15), 5)
 		self.conf["timeBetweenTopicForceUpdates"] = max(self.conf.get("timeBetweenTopicForceUpdates", 1200), 600)

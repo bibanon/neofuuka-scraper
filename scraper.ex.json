@@ -40,9 +40,11 @@
 		},
 		
 		"boards": {
-			"example": {
-				"sourceBoard": "a"
-			}
-		}
+            "g": {
+                "timeBetweenIndexUpdates": 30,
+                "blacklistPostFilter": ".*(gpt|local models|stable diff|voice synth|macos|windows).*",
+                "whitelistPostFilter": ".*(dra/g/on maid|maids|big numbers).*"
+            }
+        }
 	}
 }

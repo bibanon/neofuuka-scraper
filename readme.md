@@ -155,6 +155,8 @@ The object key defines the board's name in the database. You may use `sourceBoar
 * `requestTimeoutFile` - Request timeout for image requests. Suggested values are between `40` and `120`.
 * `requestThrottleBoard` - Minimum time between requests for each board, in seconds. Suggested values are between `0.3` and `1.0`. Don't go too high on fast boards.
 * `requestThrottleGlobal` - Minimum time between requests for all boards, in seconds. Be careful with this. If you have more than a few boards, just set it to zero.
+* `blacklistPostFilter` - A board level config that's a regex pattern. If specified, will **never** download threads with matching subjects or comments.
+* `whitelistPostFilter` - A board level config that's a regex pattern. If specified, will **only** download threads with matching subjects or comments. If `blacklistPostFilter` is specified and has a match, a thread will not be downloaded despite a `whitelistPostFilter` match.
 
 ## Database Setup
 
@@ -310,19 +312,19 @@ CREATE TABLE `%%BOARD%%_threads` (
 <summary>SQL Code for Triggers</summary>
 
 ```sql
-DELIMITER ;;
+DELIMITER \\
 
-DROP PROCEDURE IF EXISTS `update_thread_%%BOARD%%`;;
-DROP PROCEDURE IF EXISTS `create_thread_%%BOARD%%`;;
-DROP PROCEDURE IF EXISTS `delete_thread_%%BOARD%%`;;
-DROP PROCEDURE IF EXISTS `insert_image_%%BOARD%%`;;
-DROP PROCEDURE IF EXISTS `delete_image_%%BOARD%%`;;
-DROP PROCEDURE IF EXISTS `insert_post_%%BOARD%%`;;
-DROP PROCEDURE IF EXISTS `delete_post_%%BOARD%%`;;
+DROP PROCEDURE IF EXISTS `update_thread_%%BOARD%%`\\
+DROP PROCEDURE IF EXISTS `create_thread_%%BOARD%%`\\
+DROP PROCEDURE IF EXISTS `delete_thread_%%BOARD%%`\\
+DROP PROCEDURE IF EXISTS `insert_image_%%BOARD%%`\\
+DROP PROCEDURE IF EXISTS `delete_image_%%BOARD%%`\\
+DROP PROCEDURE IF EXISTS `insert_post_%%BOARD%%`\\
+DROP PROCEDURE IF EXISTS `delete_post_%%BOARD%%`\\
 
-DROP TRIGGER IF EXISTS `before_ins_%%BOARD%%`;;
-DROP TRIGGER IF EXISTS `after_ins_%%BOARD%%`;;
-DROP TRIGGER IF EXISTS `after_del_%%BOARD%%`;;
+DROP TRIGGER IF EXISTS `before_ins_%%BOARD%%`\\
+DROP TRIGGER IF EXISTS `after_ins_%%BOARD%%`\\
+DROP TRIGGER IF EXISTS `after_del_%%BOARD%%`\\
 
 CREATE PROCEDURE `update_thread_%%BOARD%%` (ins INT, tnum INT, subnum INT, timestamp INT, media INT, email VARCHAR(100))
 BEGIN
@@ -337,17 +339,17 @@ BEGIN
     op.nreplies = IF(ins, (op.nreplies + 1), (op.nreplies - 1)),
     op.nimages = IF(media, IF(ins, (op.nimages + 1), (op.nimages - 1)), op.nimages)
   WHERE op.thread_num = tnum;
-END;;
+END\\
 
 CREATE PROCEDURE `create_thread_%%BOARD%%` (num INT, timestamp INT)
 BEGIN
   INSERT IGNORE INTO `%%BOARD%%_threads` VALUES (num, timestamp, timestamp, timestamp, NULL, NULL, timestamp, 0, 0, 0, 0);
-END;;
+END\\
 
 CREATE PROCEDURE `delete_thread_%%BOARD%%` (tnum INT)
 BEGIN
   DELETE FROM `%%BOARD%%_threads` WHERE thread_num = tnum;
-END;;
+END\\
 
 CREATE PROCEDURE `insert_image_%%BOARD%%` (n_media_hash VARCHAR(25), n_media VARCHAR(50), n_preview VARCHAR(50), n_op INT)
 BEGIN
@@ -368,12 +370,12 @@ BEGIN
       preview_reply = COALESCE(preview_reply, VALUES(preview_reply)),
       media = COALESCE(media, VALUES(media));
   END IF;
-END;;
+END\\
 
 CREATE PROCEDURE `delete_image_%%BOARD%%` (n_media_id INT)
 BEGIN
   UPDATE `%%BOARD%%_images` SET total = (total - 1) WHERE media_id = n_media_id;
-END;;
+END\\
 
 CREATE TRIGGER `before_ins_%%BOARD%%` BEFORE INSERT ON `%%BOARD%%`
 FOR EACH ROW
@@ -382,7 +384,7 @@ BEGIN
     CALL insert_image_%%BOARD%%(NEW.media_hash, NEW.media_orig, NEW.preview_orig, NEW.op);
     SET NEW.media_id = LAST_INSERT_ID();
   END IF;
-END;;
+END\\
 
 CREATE TRIGGER `after_ins_%%BOARD%%` AFTER INSERT ON `%%BOARD%%`
 FOR EACH ROW
@@ -391,7 +393,7 @@ BEGIN
     CALL create_thread_%%BOARD%%(NEW.num, NEW.timestamp);
   END IF;
   CALL update_thread_%%BOARD%%(1, NEW.thread_num, NEW.subnum, NEW.timestamp, NEW.media_id, NEW.email);
-END;;
+END\\
 
 CREATE TRIGGER `after_del_%%BOARD%%` AFTER DELETE ON `%%BOARD%%`
 FOR EACH ROW
@@ -403,7 +405,7 @@ BEGIN
   IF OLD.media_hash IS NOT NULL THEN
     CALL delete_image_%%BOARD%%(OLD.media_id);
   END IF;
-END;;
+END\\
 
 DELIMITER ;
 ```

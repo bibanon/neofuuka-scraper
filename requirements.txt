@@ -3,3 +3,4 @@ psutil~=5.8
 pymysql~=1.0
 pytz~=2021.2
 requests~=2.26
+redis~=4.3.4

@@ -1,4 +1,5 @@
 import os
+import stat
 import time
 import hashlib
 
@@ -37,13 +38,18 @@ class FetcherFiles(Thread):
 			
 			try:
 				if os.path.isfile(file_path):
+					size = os.path.getsize(file_path)
+					
 					if (
-						file.type1 == FileType1.SRC and
-						self.board.conf.get("fileMismatchRedo", False) and
-						os.path.getsize(file_path) != file.size
+						size == 0 or
+						(
+							file.type1 == FileType1.SRC and
+							self.board.conf.get("fileMismatchRedo", False) and
+							size != file.size
+						)
 					):
 						# delete the file and redownload
-						os.path.remove(file_path)
+						os.remove(file_path)
 					else:
 						if (
 							file.type1 == FileType1.SRC and
@@ -70,12 +76,15 @@ class FetcherFiles(Thread):
 						if res.code != 200:
 							raise Exception(f"code {res.code}")
 						
+						if len(res.data) == 0:
+							raise Exception("zero size")
+						
 						if file.type1 == FileType1.SRC:
 							# some really old uploads have very incorrect sizes
 							# so only trust sizes for relatively recent uploads
 							if (
 								len(res.data) != file.size and
-								(file.time / 1000) > (time.time() - 864000)
+								(file.time / 1000) > (time.time() - 2592000)
 							):
 								raise Exception("bad size")
 							
@@ -93,9 +102,14 @@ class FetcherFiles(Thread):
 						
 						tmp = open(file_path_t, "wb")
 						tmp.write(res.data)
+						
+						if self.board.conf.get("fileForceFlush", False):
+							tmp.flush()
+							os.fsync(tmp.fileno())
+						
 						tmp.close()
 						
-						os.rename(file_path_t, file_path)
+						os.replace(file_path_t, file_path)
 						
 						break
 					except Exception as err:
@@ -132,6 +146,7 @@ class FetcherFiles(Thread):
 				self.board.sleep(0.003)
 				continue
 			except:
+				# TODO: Handle unknown errors
 				pass
 			
 			self.board.sleep(1.0)

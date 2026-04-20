@@ -7,6 +7,43 @@ from .Requests import *
 from .ItemTopic import *
 from .Utils import *
 
+
+def should_archive_topic(topic_d, conf):
+	"""
+	- If a post is blacklisted and whitelisted, it will not be archived - blacklisted filters beat whitelisted filters.
+	- If only a blacklist is specified, only skip blacklisted posts and archive everything else.
+	- If only a whitelist is specified, only archive whitelist posts and archive everything else.
+	- If no lists are specified, archive everything.
+	"""
+
+	subject = topic_d.get('sub', False)
+	comment = topic_d.get('com', False)
+
+	blacklist_post_filter = conf.get('blacklistPostFilter', False)
+	if blacklist_post_filter:
+		if subject:
+			if re.fullmatch(blacklist_post_filter, subject, re.IGNORECASE) is not None:
+				return False
+			
+		if comment:
+			if re.fullmatch(blacklist_post_filter, comment, re.IGNORECASE) is not None:
+				return False
+	
+	whitelist_post_filter = conf.get('whitelistPostFilter', False)
+	if whitelist_post_filter:
+		if subject:
+			if re.fullmatch(whitelist_post_filter, subject, re.IGNORECASE) is not None:
+				return True
+			
+		if comment:
+			if re.fullmatch(whitelist_post_filter, comment, re.IGNORECASE) is not None:
+				return True
+			
+		return False
+	
+	return True
+				
+
 class Indexer(Thread):
 	def __init__(self, board, **args):
 		super().__init__(board, **args)
@@ -96,6 +133,9 @@ class Indexer(Thread):
 							):
 								raise Exception()
 							
+							if not should_archive_topic(topic_d, self.board.conf):
+								continue
+
 							topic = None
 							
 							# find the corresponding topic object
